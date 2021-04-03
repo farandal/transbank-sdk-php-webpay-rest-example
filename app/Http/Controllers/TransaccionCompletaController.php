@@ -21,9 +21,7 @@ class TransaccionCompletaController extends Controller
 
     public function __construct(){
         if (app()->environment('production')) {
-            TransaccionCompleta::setCommerceCode(config('services.transbank.transaccion_completa_cc'));
-            TransaccionCompleta::setApiKey(config('services.transbank.transaccion_completa_api_key'));
-            TransaccionCompleta::setIntegrationType(Options::ENVIRONMENT_LIVE);
+            TransaccionCompleta::configureForProduction(config('services.transbank.transaccion_completa_cc'), config('services.transbank.transaccion_completa_api_key'));
         } else {
             TransaccionCompleta::configureForTesting();
         }
@@ -32,8 +30,8 @@ class TransaccionCompletaController extends Controller
     public function createTransaction(Request $request)
     {
 
-        $req = $request->all();
-        $res = Transaction::create(
+        $req = $request->except('_token');
+        $res = Transaction::build()->create(
             $req["buy_order"],
             $req["session_id"],
             $req["amount"],
@@ -51,9 +49,9 @@ class TransaccionCompletaController extends Controller
     public function installments(Request $request)
     {
 
-        $req = $request->all();
+        $req = $request->except('_token');
 
-        $res = Transaction::installments(
+        $res = Transaction::build()->installments(
             $req['token_ws'],
             $req["installments_number"]
         );
@@ -68,9 +66,9 @@ class TransaccionCompletaController extends Controller
     public function commit(Request $request)
     {
 
-        $req = $request->all();
+        $req = $request->except('_token');
 
-        $res = Transaction::commit(
+        $res = Transaction::build()->commit(
             $req['token_ws'],
             $req["id_query_installments"],
             $req["deferred_period_index"],
@@ -86,9 +84,9 @@ class TransaccionCompletaController extends Controller
     public function status(Request $request)
     {
 
-        $req = $request->all();
+        $req = $request->except('_token');
 
-        $res = Transaction::status(
+        $res = Transaction::build()->status(
             $req['token_ws']
         );
 
@@ -101,9 +99,9 @@ class TransaccionCompletaController extends Controller
 
     public function refund(Request $request)
     {
-        $req = $request->all();
+        $req = $request->except('_token');
 
-        $res = Transaction::refund(
+        $res = Transaction::build()->refund(
             $req['token_ws'],
             $req["amount"]
         );

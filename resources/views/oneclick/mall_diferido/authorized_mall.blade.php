@@ -12,11 +12,11 @@
 <form action="/oneclick/mall/diferido/capture" method="post">
     @csrf
     <label for="commerce_code">Código de Comercio (Tienda Hija)</label>
-    <input type="text" name="commerce_code" value="{{ $resp->getDetails()[0]['commerce_code'] }}">
+    <input type="text" name="commerce_code" value="{{ $resp->getDetails()[0]->getCommerceCode() }}">
     <label for="buy_order">Orden de compra comercio hijo</label>
-    <input type="text" name="buy_order" value="{{ $resp->getDetails()[0]['buy_order'] }}">
+    <input type="text" name="buy_order" value="{{ $resp->getDetails()[0]->getBuyOrder() }}">
     <label for="authorization_code">Código de autorización</label>
-    <input type="text" name="authorization_code" value="{{ $resp->getDetails()[0]['authorization_code'] }}">
+    <input type="text" name="authorization_code" value="{{ $resp->getDetails()[0]->getAuthorizationCode() }}">
     <label for="amount">Monto</label>
     <input type="text" name="amount" value="1000">
 

@@ -5,6 +5,11 @@
 
 
 <h1>Response</h1>
+<?php if($resp->isApproved()): ?>
+<span class="text-green-700 text-xl my-2 inline-block font-bold">Transacción aprobada</span>
+<?php else: ?>
+<span class="text-red-700 text-xl my-2 inline-block font-bold">Transacción rechazada</span>
+<?php endif; ?>
 <pre> {{  print_r($resp, true) }} </pre>
 
 
@@ -26,13 +31,13 @@
     <input name="parent_buy_order" value="{{ $resp->getBuyOrder() }}">
 
     <label>Commerce code hijo</label>
-    <input name="commerce_code" value="{{ $resp->getDetails()[0]["commerce_code"] }}">
+    <input name="commerce_code" value="{{ $resp->getDetails()[0]->getCommerceCode() }}">
 
     <label>Buy order hijo</label>
-    <input name="child_buy_order" value="{{ $resp->getDetails()[0]["buy_order"] }}">
+    <input name="child_buy_order" value="{{ $resp->getDetails()[0]->getBuyOrder() }}">
 
     <label>Monto</label>
-    <input name="amount" value="{{ $resp->getDetails()[0]["amount"] }}"/>
+    <input name="amount" value="{{ $resp->getDetails()[0]->getAmount() }}"/>
 
     <button type="submit">Enviar</button>
 </form>

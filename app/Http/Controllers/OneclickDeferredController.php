@@ -15,54 +15,39 @@ class OneclickDeferredController extends Controller
 
     public function __construct(){
         if (app()->environment('production')) {
-            Oneclick::setCommerceCode(config('services.transbank.oneclick_mall_deferred_cc'));
-            Oneclick::setApiKey(config('services.transbank.oneclick_mall_deferred_api_key'));
-            Oneclick::setIntegrationType(Options::ENVIRONMENT_LIVE);
+            Oneclick::configureForProduction(config('services.transbank.oneclick_mall_deferred_cc'), config('services.transbank.oneclick_mall_deferred_api_key'));
         } else {
-            Oneclick::configureOneclickMallDeferredForTesting();
+            Oneclick::configureForTestingDeferred();
         }
     }
 
     public function startInscription(Request $request)
     {
-        session_start();
-
-        Oneclick::configureOneclickMallDeferredForTesting();
-
-        $req = $request->all();
+        $req = $request->except('_token');
         $userName = $req["user_name"];
         $email = $req["email"];
         $responseUrl = $req["response_url"];
 
-        $resp = MallInscription::start($userName, $email, $responseUrl);
+        $resp = MallInscription::build()->start($userName, $email, $responseUrl);
 
-        $_SESSION["user_name"] = $userName;
-        $_SESSION["email"] = $email;
+        session(['user_name' => $userName, 'email' => $email]);
         return view('oneclick/mall_diferido/inscription_successful', ['resp' => $resp, 'req' => $req]);
     }
 
     public function finishInscription(Request $request)
     {
-        session_start();
-
-        Oneclick::configureOneclickMallDeferredForTesting();
-
-        $req = $request->all();
+        $req = $request->except('_token');
         $token = $req["TBK_TOKEN"];
 
-        $resp = MallInscription::finish($token);
-        $userName = array_key_exists("user_name", $_SESSION) ? $_SESSION["user_name"] : '';
+        $resp = MallInscription::build()->finish($token);
+        $userName = session("user_name", '');
         return view('oneclick/mall_diferido/inscription_finished', ["resp" => $resp, "req" => $req, "username" => $userName]);
 
     }
 
     public function authorizeMall(Request $request)
     {
-        session_start();
-
-        Oneclick::configureOneclickMallDeferredForTesting();
-
-        $req = $request->all();
+        $req = $request->except('_token');
 
         $userName = $req["username"];
         $tbkUser = $req["tbk_user"];
@@ -81,7 +66,7 @@ class OneclickDeferredController extends Controller
             ]
         ];
 
-        $resp = MallTransaction::authorize($userName, $tbkUser, $parentBuyOrder, $details);
+        $resp = MallTransaction::build()->authorize($userName, $tbkUser, $parentBuyOrder, $details);
 
         return view('oneclick/mall_diferido/authorized_mall', ["req" => $req, "resp" => $resp]);
 
@@ -89,11 +74,9 @@ class OneclickDeferredController extends Controller
 
     public function transactionCapture(Request $request)
     {
-        Oneclick::configureOneclickMallDeferredForTesting();
+        $req = $request->except('_token');
 
-        $req = $request->all();
-
-        $resp = MallTransaction::capture(
+        $resp = MallTransaction::build()->capture(
             $req['commerce_code'], $req['buy_order'], $req['authorization_code'], $req['amount']
         );
 
@@ -102,40 +85,34 @@ class OneclickDeferredController extends Controller
 
     public function transactionStatus(Request $request)
     {
-        Oneclick::configureOneclickMallDeferredForTesting();
-
-        $req = $request->all();
+        $req = $request->except('_token');
         $buyOrder = $req["buy_order"];
 
-        $resp = MallTransaction::status($buyOrder);
+        $resp = MallTransaction::build()->status($buyOrder);
 
         return view('oneclick/mall_diferido/mall_transaction_status', ["req" => $req, "resp" => $resp]);
     }
 
     public function refund(Request $request)
     {
-        Oneclick::configureOneclickMallDeferredForTesting();
-
-        $req = $request->all();
+        $req = $request->except('_token');
         $buyOrder = $req["parent_buy_order"];
         $childCommerceCode = $req["commerce_code"];
         $childBuyOrder = $req["child_buy_order"];
         $amount = $req["amount"];
 
-        $resp = MallTransaction::refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
+        $resp = MallTransaction::build()->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
 
         return view('oneclick/mall_diferido/mall_refund_transaction', ["req" => $req, "resp" => $resp]);
     }
 
     public function deleteInscription(Request $request)
     {
-        Oneclick::configureOneclickMallDeferredForTesting();
-
-        $req = $request->all();
+        $req = $request->except('_token');
         $tbkUser = $req["tbk_user"];
         $userName = $req["user_name"];
 
-        $resp = MallInscription::delete($tbkUser, $userName);
+        $resp = MallInscription::build()->delete($tbkUser, $userName);
         return view('oneclick/mall_diferido/mall_inscription_deleted', ["req" => $req, "resp" => $resp]);
     }
 }

@@ -13,18 +13,14 @@ class OneclickController extends Controller
 
     public function __construct(){
         if (app()->environment('production')) {
-            Oneclick::setCommerceCode(config('services.transbank.oneclick_mall_cc'));
-            Oneclick::setApiKey(config('services.transbank.oneclick_mall_api_key'));
-            Oneclick::setIntegrationType(Options::ENVIRONMENT_LIVE);
+            Oneclick::configureForProduction(config('services.transbank.oneclick_mall_cc'), config('services.transbank.oneclick_mall_api_key'));
         } else {
-            Oneclick::configureOneclickMallForTesting();
+            Oneclick::configureForTesting();
         }
     }
 
     public function startInscription(Request $request)
     {
-
-        session_start();
 
         $req = $request->except('_token');
         $userName = $req["user_name"];
@@ -32,28 +28,25 @@ class OneclickController extends Controller
         $responseUrl = $req["response_url"];
 
 
-        $resp = MallInscription::start($userName, $email, $responseUrl);
+        $resp = MallInscription::build()->start($userName, $email, $responseUrl);
 
-        $_SESSION["user_name"] = $userName;
-        $_SESSION["email"] = $email;
+        session(['user_name' => $userName, 'email' => $email]);
         return view('oneclick/inscription_successful', ['resp' => $resp, 'req' => $req]);
     }
 
     public function finishInscription(Request $request)
     {
-        session_start();
         $req = $request->except('_token');
         $token = $req["TBK_TOKEN"];
 
-        $resp = MallInscription::finish($token);
-        $userName = array_key_exists("user_name", $_SESSION) ? $_SESSION["user_name"] : '';
+        $resp = MallInscription::build()->finish($token);
+        $userName = session("user_name");
         return view('oneclick/inscription_finished', ["resp" => $resp, "req" => $req, "username" => $userName]);
 
     }
 
     public function authorizeMall(Request $request)
     {
-        session_start();
         $req = $request->except('_token');
 
         $userName = $req["username"];
@@ -73,11 +66,7 @@ class OneclickController extends Controller
             ]
         ];
 
-        $apiKey = \Transbank\Webpay\Oneclick::getApiKey();
-        $parentCommerceCode = 597055555541;
-        $options = new Options($apiKey, $parentCommerceCode);
-
-        $resp = MallTransaction::authorize($userName, $tbkUser, $parentBuyOrder, $details, $options);
+        $resp = MallTransaction::build()->authorize($userName, $tbkUser, $parentBuyOrder, $details);
 
         return view('oneclick/authorized_mall', ["req" => $req, "resp" => $resp]);
 
@@ -88,7 +77,7 @@ class OneclickController extends Controller
         $req = $request->except('_token');
         $buyOrder = $req["buy_order"];
 
-        $resp = MallTransaction::status($buyOrder);
+        $resp = MallTransaction::build()->status($buyOrder);
 
         return view('oneclick/mall_transaction_status', ["req" => $req, "resp" => $resp]);
     }
@@ -101,7 +90,7 @@ class OneclickController extends Controller
         $childBuyOrder = $req["child_buy_order"];
         $amount = $req["amount"];
 
-        $resp = MallTransaction::refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
+        $resp = MallTransaction::build()->refund($buyOrder, $childCommerceCode, $childBuyOrder, $amount);
 
         return view('oneclick/mall_refund_transaction', ["req" => $req, "resp" => $resp]);
     }
@@ -112,7 +101,7 @@ class OneclickController extends Controller
         $tbkUser = $req["tbk_user"];
         $userName = $req["user_name"];
 
-        $resp = MallInscription::delete($tbkUser, $userName);
+        $resp = MallInscription::build()->delete($tbkUser, $userName);
         return view('oneclick/mall_inscription_deleted', ["req" => $req, "resp" => $resp]);
     }
 

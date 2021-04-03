@@ -12,8 +12,6 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Transbank\TransaccionCompleta\MallTransaction;
-use Transbank\TransaccionCompleta\MallTransaccionCompleta;
-use Transbank\TransaccionCompleta\Options;
 use Transbank\TransaccionCompleta\TransaccionCompleta;
 
 class TransaccionCompletaMallController
@@ -21,25 +19,23 @@ class TransaccionCompletaMallController
 
     public function __construct(){
         if (app()->environment('production')) {
-            TransaccionCompleta::setCommerceCode(config('services.transbank.transaccion_completa_mall_cc'));
-            TransaccionCompleta::setApiKey(config('services.transbank.transaccion_completa_mall_api_key'));
-            TransaccionCompleta::setIntegrationType(Options::ENVIRONMENT_LIVE);
+            TransaccionCompleta::configureForProduction(config('services.transbank.transaccion_completa_mall_cc'), config('services.transbank.transaccion_completa_mall_api_key'));
         } else {
-            TransaccionCompleta::configureMallForTesting();
+            TransaccionCompleta::configureForTestingMallNoCVV();
         }
     }
 
     public function showMallCreate(Request $request)
     {
-        $childCommerceCodes = Options::DEFAULT_TRANSACCION_COMPLETA_MALL_CHILD_COMMERCE_CODE;
+        $childCommerceCodes = [TransaccionCompleta::DEFAULT_MALL_NO_CVV_CHILD_COMMERCE_CODE_1, TransaccionCompleta::DEFAULT_MALL_NO_CVV_CHILD_COMMERCE_CODE_2];
         return view('transaccion_completa/mall_create',["childCommerceCodes" => $childCommerceCodes ]);
     }
 
 
     public function mallCreate(Request $request) {
 
-        $req = $request->all();
-        $res = MallTransaction::create(
+        $req = $request->except('_token');
+        $res = MallTransaction::build()->create(
             $req["buy_order"],
             $req["session_id"],
             $req["card_number"],
@@ -58,8 +54,8 @@ class TransaccionCompletaMallController
     public function mallInstallments(Request $request)
     {
 
-        $req = $request->all();
-        $res = MallTransaction::installments(
+        $req = $request->except('_token');
+        $res = MallTransaction::build()->installments(
             $req["token_ws"],
             $req["details"]
         );
@@ -75,8 +71,8 @@ class TransaccionCompletaMallController
     public function mallCommit(Request $request)
     {
 
-        $req = $request->all();
-        $res = MallTransaction::commit(
+        $req = $request->except('_token');
+        $res = MallTransaction::build()->commit(
             $req["token"],
             $req["details"]
         );
@@ -91,8 +87,8 @@ class TransaccionCompletaMallController
     public function mallStatus($token, Request $request)
     {
 
-        $req = $request->all();
-        $res = MallTransaction::status($token);
+        $req = $request->except('_token');
+        $res = MallTransaction::build()->status($token);
 
         return view('transaccion_completa/mall_status', [
             "req" => $req,
@@ -104,9 +100,9 @@ class TransaccionCompletaMallController
     public function mallRefund(Request $request)
     {
 
-        $req = $request->all();
+        $req = $request->except('_token');
 
-        $res = MallTransaction::refund(
+        $res = MallTransaction::build()->refund(
           $req["token"],
           $req["child_buy_order"],
           $req["child_commerce_code"],
