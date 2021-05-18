@@ -42,7 +42,20 @@
     </label>
     <input name="token_ws" value={{ $res->getToken() }} />
 
-    <button type="submit">Enviar datos</button>
+    <button type="submit">Consultar Cuotas</button>
+</form>
+<br>
+<br>
+<br>
+<form class="webpay_form" action="/transaccion_completa/transaction_commit" method="post" style="display: flex; flex-direction:column; width:50%;font-size: 20px;" >
+    @csrf
+    <label for="token_ws">Token</label>
+    <input type="text" name="token_ws" value="{{ $res->getToken() }}">
+    <label for="grace_period">
+        Periodo de Gracia
+    </label>
+    <input type="text" name="grace_period" value="false">
+    <button type="submit">Confirmar Transaccion</button>
 </form>
 
 

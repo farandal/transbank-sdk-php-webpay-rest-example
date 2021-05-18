@@ -72,13 +72,19 @@ class TransaccionCompletaController extends Controller
         TransaccionNormalCompleta::configureForTesting();
 
         $req = $request->all();
+        $res = null;
+        if (in_array("id_query_installments", $req) && in_array("deferred_period_index", $req)) {
+            $res = Transaction::commit(
+                $req['token_ws'],
+                $req["id_query_installments"],
+                $req["deferred_period_index"],
+                $req["grace_period"]
+            );
+        } else {
+            $res = Transaction::commit($req["token_ws"], null, null, null);
+        }
 
-        $res = Transaction::commit(
-            $req['token_ws'],
-            $req["id_query_installments"],
-            $req["deferred_period_index"],
-            $req["grace_period"]
-        );
+
 
         return view('transaccion_completa/transaction_commit', [
             "req" => $req,
